@@ -86,7 +86,7 @@ jobs:
      path: artifacts
 
   - name: Upload GitHub Release
-    uses: softprops/actions-gh-release@v1
+    uses: softprops/action-gh-release@v1
     with:
      tag_name: ${{ github.ref_name }}
      files: artifacts/**/*.*

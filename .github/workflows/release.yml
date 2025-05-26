@@ -7,31 +7,31 @@ on:
 jobs:
  build-linux:
   runs-on: ubuntu-latest
-   steps:
-   - name: Checkout repository
-     uses: actions/checkout@v4
+  steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
 
-   - name: Install dependencies
-     run: sudo apt-get update && sudo apt-get install -y rpm
+  - name: Install dependencies
+    run: sudo apt-get update && sudo apt-get install -y rpm
 
-   - name: Configure
-     run: cmake -H. -B build -DCMAKE_BUILD_TYPE=Release
+  - name: Configure
+    run: cmake -H. -B build -DCMAKE_BUILD_TYPE=Release
 
-   - name: Build
-     run: cmake --build build --config Release
+  - name: Build
+    run: cmake --build build --config Release
 
-   - name: Create DEB & RPM packages
-     run: cd build && cpack -G DEB && cpack -G RPM
+  - name: Create DEB & RPM packages
+    run: cd build && cpack -G DEB && cpack -G RPM
 
-   - name: Archive source code
-     run: git archive --format=zip --output=source.zip HEAD &&
+  - name: Archive source code
+    run: git archive --format=zip --output=source.zip HEAD &&
           git archive --format=tar.gz --output=source.tar.gz HEAD
 
-   - name: Upload artifacts
-     uses: actions/upload-artifact@v4
-      with:
-       name: linux-packages
-       path: build/*.deb && build/*.rpm && source.zip && source.tar.gz
+  - name: Upload artifacts
+    uses: actions/upload-artifact@v4
+     with:
+      name: linux-packages
+      path: build/*.deb && build/*.rpm && source.zip && source.tar.gz
 
  build-windows:
   runs-on: windows-latest

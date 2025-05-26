@@ -1,7 +1,7 @@
 include(InstallRequiredSystemLibraries)
 
 set(CPACK_PACKAGE_CONTACT "andrey.tynkov@gmail.com")
-set(CPACK_PACKAGE_VERSION "0.1.1.4")
+set(CPACK_PACKAGE_VERSION "0.1.1.6")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "C++ program for solving quadratic equations")
 
 # set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)

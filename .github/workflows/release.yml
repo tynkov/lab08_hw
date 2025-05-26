@@ -55,7 +55,7 @@ jobs:
           cd build
           cpack -G WIX
 
-      - name: Upload artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-package

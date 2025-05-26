@@ -2,8 +2,7 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    tags: -"v*"
 
 jobs:
   build-linux:
@@ -21,25 +20,17 @@ jobs:
         run: cmake --build build --config Release
 
       - name: Create DEB & RPM packages
-        run: |
-          cd build
-          cpack -G DEB
-          cpack -G RPM
+        run: cd build && cpack -G DEB && cpack -G RPM
 
       - name: Archive source code
-        run: |
-          git archive --format=zip --output=source.zip HEAD
-          git archive --format=tar.gz --output=source.tar.gz HEAD
+        run: git archive --format=zip --output=source.zip HEAD &&
+             git archive --format=tar.gz --output=source.tar.gz HEAD
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-packages
-          path: |
-            build/*.deb
-            build/*.rpm
-            source.zip
-            source.tar.gz
+          path: build/*.deb && build/*.rpm && source.zip && source.tar.gz
 
   build-windows:
     runs-on: windows-latest
@@ -53,9 +44,7 @@ jobs:
         run: cmake --build build --config Release
 
       - name: Create MSI package
-        run: |
-          cd build
-          cpack -G WIX
+        run: cd build && cpack -G WIX
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -75,9 +64,7 @@ jobs:
         run: cmake --build build --config Release
 
       - name: Create DMG package
-        run: |
-          cd build
-          cpack -G DragNDrop
+        run: cd build && cpack -G DragNDrop
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

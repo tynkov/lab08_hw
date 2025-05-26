@@ -29,9 +29,9 @@ jobs:
 
   - name: Upload artifacts
     uses: actions/upload-artifact@v4
-     with:
-      name: linux-packages
-      path: build/*.deb && build/*.rpm && source.zip && source.tar.gz
+    with:
+     name: linux-packages
+     path: build/*.deb && build/*.rpm && source.zip && source.tar.gz
 
  build-windows:
   runs-on: windows-latest
@@ -50,9 +50,9 @@ jobs:
 
   - name: Upload artifacts
     uses: actions/upload-artifact@v4
-     with:
-      name: windows-package
-      path: build/*.msi
+    with:
+     name: windows-package
+     path: build/*.msi
 
  build-macos:
   runs-on: macos-latest
@@ -71,9 +71,9 @@ jobs:
 
   - name: Upload artifacts
     uses: actions/upload-artifact@v4
-     with:
-      name: macos-package
-      path: build/*.dmg
+    with:
+     name: macos-package
+     path: build/*.dmg
 
  release:
   needs: [build-linux, build-windows, build-macos]
@@ -81,13 +81,13 @@ jobs:
   steps:
   - name: Download artifacts
     uses: actions/download-artifact@v4
-     with:
-      path: artifacts
+    with:
+     path: artifacts
 
   - name: Upload GitHub Release
     uses: softprops/actions-gh-release@v1
-     with:
-      tag_name: ${{ github.ref_name }}
-      files: artifacts/**/*.*
-     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    with:
+     tag_name: ${{ github.ref_name }}
+     files: artifacts/**/*.*
+    env:
+     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

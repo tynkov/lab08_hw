@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'
 
 jobs:
   build-linux:
@@ -22,81 +22,82 @@ jobs:
 
       - name: Create DEB & RPM packages
         run: |
-          cd build
-          cpack -G DEB
-          cpack -G RPM
+          cd build
+          cpack -G DEB
+          cpack -G RPM
 
       - name: Archive source code
         run: |
-          git archive --format=zip --output=source.zip HEAD
-          git archive --format=tar.gz --output=source.tar.gz HEAD
+          git archive --format=zip --output=source.zip HEAD
+          git archive --format=tar.gz --output=source.tar.gz HEAD
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-packages
           path: |
-            build/*.deb
-            build/*.rpm
-            source.*
+            build/*.deb
+            build/*.rpm
+            source.zip
+            source.tar.gz
 
   build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Configure
+      - name: Configure
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 
-      - name: Build
+      - name: Build
         run: cmake --build build --config Release
 
-      - name: Create MSI package
+      - name: Create MSI package
         run: |
-          cd build
-          cpack -G WIX
+          cd build
+          cpack -G WIX
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-package
-          path: build/*.msi
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: build/*.msi
 
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Configure
+      - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build
+      - name: Build
         run: cmake --build build --config Release
 
-      - name: Create DMG package
+      - name: Create DMG package
         run: |
-          cd build
-          cpack -G DragNDrop
+          cd build
+          cpack -G DragNDrop
 
-      - name: Upload artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-package
           path: build/*.dmg
 
-  release:
-    needs: [build-linux, build-windows, build-macos]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
+  release:
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
         uses: actions/download-artifact@v4
-        with:
-          path: artifacts
+        with:
+          path: artifacts
 
-      - name: Upload GitHub Release
+      - name: Upload GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-          files: artifacts/**/*.*
+          tag_name: ${{ github.ref_name }}
+          files: artifacts/**/*.*
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

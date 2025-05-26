@@ -1,7 +1,6 @@
 include(InstallRequiredSystemLibraries)
 
-set(CPACK_PACKAGE_NAME "solverapp")
-set(CPACK_PACKAGE_CONTACT andrey.tynkov@gmail.com)
+set(CPACK_PACKAGE_CONTACT "andrey.tynkov@gmail.com")
 set(CPACK_PACKAGE_VERSION_MAJOR \${PRINT_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR \${PRINT_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH \${PRINT_VERSION_PATCH})

@@ -100,3 +100,37 @@ $ docker run --rm -v $(pwd):/src lab08
 </details>
 
 
+2. Создать конвейер обработки в .github/workflows, в котором будут запускаться задачи создания контейнера, выполнение в нем нужных команд по загрузке кода, сборки и получения файла с информацией, а также публикация этого файла в качестве артефакта в github actions.
+
+CI.yml
+```yml
+name: Build & Upload logs
+
+on:
+ push:
+  branches: [main]
+ pull_request:
+  branches: [main]
+
+jobs:
+ build-docker:
+
+  runs-on: ubuntu-latest
+
+  steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
+
+  - name: Build Docker image
+    run: docker build -t lab08 .
+
+  - name: Run Docker container
+    run: docker run --rm -v $(pwd):/src lab08
+
+  - name: Upload log as artifact
+    uses: actions/upload-artifact@v4
+    with:
+     name: build-log
+     path: logs/log.txt
+
+```

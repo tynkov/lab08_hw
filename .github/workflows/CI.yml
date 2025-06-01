@@ -1,4 +1,4 @@
-name: CMake
+name: Build & Upload logs
 
 on:
  push:
@@ -7,16 +7,22 @@ on:
   branches: [main]
 
 jobs:
- build:
+ build-docker:
 
   runs-on: ubuntu-latest
 
   steps:
   - name: Checkout repository
-    uses: actions/checkout@v3
+    uses: actions/checkout@v4
 
-  - name: Configure CMake
-    run: cmake . -B _build
+  - name: Build Docker image
+    run: docker build -t lab08 .
 
-  - name: Build project
-    run: cmake --build _build
+  - name: Run Docker container
+    run: docker run --rm -v $(pwd):/src lab08
+
+  - name: Upload log as artifact
+    uses: actions/upload-artifact@v4
+    with:
+     name: build-log
+     path: logs/log.txt

@@ -1,168 +1,102 @@
-## Laboratory work VI
+## Laboratory work VIII
+
+Данная лабораторная работа посвящена изучению систем автоматизации, развёртывания и управления приложениями на примере **Docker**
 
 ## Homework
 
-После того, как вы настроили взаимодействие с системой непрерывной интеграции,</br>
-обеспечив автоматическую сборку и тестирование ваших изменений, стоит задуматься</br>
-о создание пакетов для измениний, которые помечаются тэгами (см. вкладку [releases](https://github.com/tp-labs/lab06/releases)).</br>
-Пакет должен содержать приложение _solver_ из [предыдущего задания](https://github.com/tp-labs/lab03#задание-1)
-Таким образом, каждый новый релиз будет состоять из следующих компонентов:
-- архивы с файлами исходного кода (`.tar.gz`, `.zip`)
-- пакеты с бинарным файлом _solver_ (`.deb`, `.rpm`, `.msi`, `.dmg`)
+1. Cоздать конфигурацию **Docker**-контейнера в котором вы будете собирать проект. Эта конфигурация должна учитывать возможность передачи в этот контейнер вашего кода, сборки кода в контейнере и выгрузки оттуда файла с журнальной информацией.
 
-Для этого нужно добавить ветвление в конфигурационные файлы для **CI** со следующей логикой:</br>
-если **commit** помечен тэгом, то необходимо собрать пакеты (`DEB, RPM, WIX, DragNDrop, ...`) </br>
-и разместить их на сервисе **GitHub**.
+Dockerfile
+```
+FROM ubuntu:24.04
 
-CPackConfig.cmake
-```cmake
-include(InstallRequiredSystemLibraries)
+RUN apt update
+RUN apt install -yy gcc g++ cmake
 
-set(CPACK_PACKAGE_CONTACT "andrey.tynkov@gmail.com")
-set(CPACK_PACKAGE_VERSION "1.0.0.0")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "C++ program for solving quadratic equations")
+WORKDIR /src
+COPY build.sh /build.sh
+RUN chmod +x /build.sh
 
-set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE)
-set(CPACK_RESOURCE_FILE_README ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+ENTRYPOINT ["/build.sh"]
 
-set(CPACK_RPM_PACKAGE_NAME "solverapp-dev")
-set(CPACK_RPM_PACKAGE_LICENSE "MIT")
-set(CPACK_RPM_PACKAGE_GROUP "solver")
-set(CPACK_RPM_PACKAGE_RELEASE 1)
-
-set(CPACK_DEBIAN_PACKAGE_NAME "solverapp-dev")
-set(CPACK_DEBIAN_PACKAGE_PREDEPENDS "cmake >= 3.10")
-set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
 ```
 
-CMakeLists.txt
-```cmake
-cmake_minimum_required(VERSION 3.10)
+build.sh
+```bash
+#!/bin/bash
 
-project(solver)
+cd /src
+mkdir -p logs
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+echo -e "Конфигурация проекта:\n" > logs/log.txt
+cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=Release >> logs/log.txt
+echo -e "\n\nСборка проекта:\n" >> logs/log.txt
+cmake --build build >> logs/log.txt
 
-add_subdirectory(formatter_lib)
-add_subdirectory(formatter_ex_lib)
-add_subdirectory(solver_lib)
-add_subdirectory(hello_world_application)
-add_subdirectory(solver_application)
-
-include(CPackConfig.cmake)
-include(CPack)
 ```
 
-release.yml
-```yml
-name: Release
+<details><summary>$ docker build -t lab08 .</summary>
+[+] Building 1.9s (11/11) FINISHED                                                                                                                                                                         docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                                                                 0.0s
+ => => transferring dockerfile: 195B                                                                                                                                                                                 0.0s 
+ => [internal] load metadata for docker.io/library/ubuntu:24.04                                                                                                                                                      1.6s 
+ => [internal] load .dockerignore                                                                                                                                                                                    0.2s
+ => => transferring context: 2B                                                                                                                                                                                      0.1s
+ => [1/6] FROM docker.io/library/ubuntu:24.04@sha256:6015f66923d7afbc53558d7ccffd325d43b4e249f41a6e93eef074c9505d2233                                                                                                0.0s
+ => [internal] load build context                                                                                                                                                                                    0.0s 
+ => => transferring context: 30B                                                                                                                                                                                     0.0s 
+ => CACHED [2/6] RUN apt update                                                                                                                                                                                      0.0s 
+ => CACHED [3/6] RUN apt install -yy gcc g++ cmake                                                                                                                                                                   0.0s 
+ => CACHED [4/6] WORKDIR /src                                                                                                                                                                                        0.0s 
+ => CACHED [5/6] COPY build.sh /build.sh                                                                                                                                                                             0.0s 
+ => CACHED [6/6] RUN chmod +x /build.sh                                                                                                                                                                              0.0s 
+ => exporting to image                                                                                                                                                                                               0.0s 
+ => => exporting layers                                                                                                                                                                                              0.0s 
+ => => writing image sha256:7bca94e4b02bb0eb08e40f924c585b53c4d02946793c673bbf5fd193b96ba019                                                                                                                         0.0s 
+ => => naming to docker.io/library/lab08
+</details>
 
-on:
- push:
-  tags:
-  - 'v*'
-
-permissions:
- contents: write
-
-jobs:
- build-linux:
-  runs-on: ubuntu-latest
-  steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-
-  - name: Install dependencies
-    run: sudo apt-get update && sudo apt-get install -y rpm
-
-  - name: Configure
-    run: cmake -S. -B build -DCMAKE_BUILD_TYPE=Release
-
-  - name: Build
-    run: cmake --build build --config Release
-
-  - name: Create DEB & RPM packages
-    run: |
-     cd build
-     cpack -G DEB
-     cpack -G RPM
-
-  - name: Archive source code
-    run: |
-     git archive --format=zip --output=source.zip HEAD
-     git archive --format=tar.gz --output=source.tar.gz HEAD
-
-  - name: Upload artifacts
-    uses: actions/upload-artifact@v4
-    with:
-     name: linux-packages
-     path: |
-      build/*.deb
-      build/*.rpm
-      source.zip
-      source.tar.gz
-
- build-windows:
-  runs-on: windows-latest
-  steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-
-  - name: Configure
-    run: cmake -S. -B build -G "Visual Studio 17 2022" -A x64
-
-  - name: Build
-    run: cmake --build build --config Release
-
-  - name: Create MSI package
-    run: |
-     cd build
-     cpack -G WIX
-
-  - name: Upload artifacts
-    uses: actions/upload-artifact@v4
-    with:
-     name: windows-package
-     path: build/*.msi
-
- build-macos:
-  runs-on: macos-latest
-  steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-
-  - name: Configure
-    run: cmake -S. -B build -DCMAKE_BUILD_TYPE=Release
-
-  - name: Build
-    run: cmake --build build --config Release
-
-  - name: Create DMG package
-    run: |
-     cd build
-     cpack -G DragNDrop
-
-  - name: Upload artifacts
-    uses: actions/upload-artifact@v4
-    with:
-     name: macos-package
-     path: build/*.dmg
-
- release:
-  needs: [build-linux, build-windows, build-macos]
-  runs-on: ubuntu-latest
-  steps:
-  - name: Download artifacts
-    uses: actions/download-artifact@v4
-    with:
-     path: artifacts
-
-  - name: Upload GitHub Release
-    uses: softprops/action-gh-release@v1
-    with:
-     tag_name: ${{ github.ref_name }}
-     files: artifacts/**/*.*
-    env:
-     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```bash
+$ docker run --rm -v $(pwd):/src lab08
 ```
+
+<details><summary>cat logs/log.txt</summary>
+Конфигурация проекта:
+
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.3s)
+-- Generating done (0.0s)
+-- Build files have been written to: /src/build
+
+
+Сборка проекта:
+
+[ 10%] Building CXX object formatter_lib/CMakeFiles/formatter.dir/formatter.cpp.o
+[ 20%] Linking CXX static library libformatter.a
+[ 20%] Built target formatter
+[ 30%] Building CXX object formatter_ex_lib/CMakeFiles/formatter_ex.dir/formatter_ex.cpp.o
+[ 40%] Linking CXX static library libformatter_ex.a
+[ 40%] Built target formatter_ex
+[ 50%] Building CXX object solver_lib/CMakeFiles/solver.dir/solver.cpp.o
+[ 60%] Linking CXX static library libsolver.a
+[ 60%] Built target solver
+[ 70%] Building CXX object hello_world_application/CMakeFiles/hello_world_application.dir/hello_world.cpp.o
+[ 80%] Linking CXX executable hello_world_application
+[ 80%] Built target hello_world_application
+[ 90%] Building CXX object solver_application/CMakeFiles/solver_application.dir/equation.cpp.o
+[100%] Linking CXX executable solver_application
+[100%] Built target solver_application
+</details>
+
+
